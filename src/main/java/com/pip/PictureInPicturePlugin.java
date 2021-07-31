@@ -132,7 +132,7 @@ public class PictureInPicturePlugin extends Plugin
 					pipWidth = (int) (screenshot.getWidth(null) * pipScale);
 				}
 
-				Image img = screenshot.getScaledInstance(pipWidth, pipHeight, Image.SCALE_FAST);
+				Image img = screenshot.getScaledInstance(pipWidth, pipHeight, config.scaleQuality().toInt());
 				ImageIcon icon=new ImageIcon(img);
 
 				pipFrame=new JFrame();
@@ -224,7 +224,7 @@ public class PictureInPicturePlugin extends Plugin
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				Image img = image.getScaledInstance(pipWidth, pipHeight, Image.SCALE_FAST);
+				Image img = image.getScaledInstance(pipWidth, pipHeight, config.scaleQuality().toInt());
 				ImageIcon icon = new ImageIcon(img);
 				icon.getImage().flush();
 				lbl.setIcon(icon);

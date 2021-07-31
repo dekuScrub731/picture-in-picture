@@ -1,5 +1,6 @@
 package com.pip;
 
+import java.awt.Image;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -146,6 +147,32 @@ public interface PictureInPictureConfig extends Config
 		}
 	}
 
+	enum scaleQuality
+	{
+		FAST("Fast", Image.SCALE_FAST),
+		SMOOTH("Smooth", Image.SCALE_SMOOTH)
+		;
+
+		private String value;
+		private int quality;
+
+		scaleQuality(String value, int quality)
+		{
+			this.value = value;
+			this.quality = quality;
+		}
+
+		@Override
+		public String toString()
+		{
+			return this.value;
+		}
+		public int toInt()
+		{
+			return this.quality;
+		}
+	}
+
 	@ConfigItem(
 			keyName = "quadrantID",
 			name = "Position",
@@ -202,4 +229,11 @@ public interface PictureInPictureConfig extends Config
 	)
 	default clickAction clickAction() { return clickAction.FOCUS; }
 
+	@ConfigItem(
+			keyName = "scaleQuality",
+			name = "Scale Quality",
+			description = "What quality Picture in Picture is scaled with",
+			position = 7
+	)
+	default scaleQuality scaleQuality() { return scaleQuality.FAST; }
 }
