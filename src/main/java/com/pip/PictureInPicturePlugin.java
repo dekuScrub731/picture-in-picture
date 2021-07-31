@@ -34,7 +34,6 @@ import javax.swing.*;
 public class PictureInPicturePlugin extends Plugin
 {
 
-	private static boolean focused = true;
 	private static boolean pipUp = false;
 	private JFrame pipFrame = null;
 	private JLabel lbl = null;
@@ -75,40 +74,33 @@ public class PictureInPicturePlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onGameTick(GameTick tick)
-	{
-		if (!focused) {
-			Window window = javax.swing.FocusManager.getCurrentManager().getActiveWindow();
-			if (window == null) {
-				if (pipFrame == null) {
-					initializePip();
-					log.debug("PIP initialized");
-				}
-			}
-		}
-	}
-
-	@Subscribe
 	public void onClientTick(ClientTick event)
 	{
-		if(clientTick % config.redrawRate().toInt()==0) {
+		// Destroy and done if focused.
+		if (clientUi.isFocused()) {
+			if (pipUp) {
+				destroyPip();
+			}
+			return;
+		}
+
+		// Initialize if not yet initialized.
+		Window window = javax.swing.FocusManager.getCurrentManager().getActiveWindow();
+		if (window == null && pipFrame == null) {
+			initializePip();
+			log.debug("PIP initialized");
+		}
+
+		// Update at refreshrate.
+		clientTick++;
+		if (clientTick % config.redrawRate().toInt() == 0) {
 			clientTick = 0;
 
-			if (focused != clientUi.isFocused()) {
-				focused = clientUi.isFocused();
-				if (focused)
-					destroyPip();
-			}
-			if (!focused) {
-				if (pipFrame != null) {
-					if (pipUp) {
-						updatePip();
-						//log.debug("PIP updated");
-					}
-				}
+			if (pipUp && pipFrame != null) {
+				updatePip();
+				//log.debug("PIP updated");
 			}
 		}
-		clientTick++;
 	}
 
 	@Provides
