@@ -1,6 +1,7 @@
 package com.pip;
 
 import com.google.inject.Provides;
+import java.applet.Applet;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
@@ -9,8 +10,11 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.stretchedmode.TranslateMouseListener;
+import net.runelite.client.plugins.stretchedmode.TranslateMouseWheelListener;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.DrawManager;
 import net.runelite.client.ui.FontManager;
@@ -38,6 +42,11 @@ public class PictureInPicturePlugin extends Plugin
 	private static boolean pipUp = false;
 	private JFrame pipFrame = null;
 	private JLabel lbl = null;
+	private ClientPanel clientPanel = null;
+	private JPanel runeLiteUiPanel;
+	private Dimension clientDimension;
+	private Applet applet;
+
 	private pipBar leftBar, rightBar;
 	private Skill leftSkill, rightSkill;
 	private Point pipPoint = new Point(0, 0);
@@ -254,7 +263,16 @@ public class PictureInPicturePlugin extends Plugin
 			return new Dimension(config.getBarWidth(), pipHeight);
 		}
 	}
+/*
+	@Inject
+	private MouseManager mouseManager;
 
+	@Inject
+	private TranslateMouseListener mouseListener;
+
+	@Inject
+	private TranslateMouseWheelListener mouseWheelListener;
+*/
 	@Inject
 	private ClientUI clientUi;
 
@@ -402,6 +420,19 @@ public class PictureInPicturePlugin extends Plugin
 						pipWidth = (int) (image.getWidth(null) * pipScale);
 					}
 
+					Dimension pipDimension = new Dimension(pipWidth, pipHeight);
+
+					applet = (Applet) client;
+					runeLiteUiPanel = (JPanel) applet.getParent();
+
+					clientDimension = new Dimension(applet.getWidth(), applet.getHeight());
+
+
+
+
+					clientPanel = new ClientPanel(applet, pipDimension);
+
+
 					Image img = pipScale(image);
 					ImageIcon icon = new ImageIcon(img);
 
@@ -432,6 +463,11 @@ public class PictureInPicturePlugin extends Plugin
 						rightBar = new pipBar(maxPrayer, currentPrayer, PRAYER);
 					}
 
+
+
+
+
+
 					//set the order of bars and pip window
 					if (position == 0)
 					{
@@ -443,11 +479,11 @@ public class PictureInPicturePlugin extends Plugin
 						{
 							pipFrame.add(rightBar);
 						}
-						pipFrame.add(lbl);
+						pipFrame.add(clientPanel, BorderLayout.CENTER);
 					}
 					else if (position == 1)
 					{
-						pipFrame.add(lbl);
+						pipFrame.add(clientPanel, BorderLayout.CENTER);
 						if (leftSkill != null)
 						{
 							pipFrame.add(leftBar);
@@ -463,12 +499,14 @@ public class PictureInPicturePlugin extends Plugin
 						{
 							pipFrame.add(leftBar);
 						}
-						pipFrame.add(lbl);
+						pipFrame.add(clientPanel, BorderLayout.CENTER);
 						if (rightSkill != null)
 						{
 							pipFrame.add(rightBar);
 						}
 					}
+
+
 
 					pipFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 					pipFrame.setAlwaysOnTop(true);
@@ -505,6 +543,36 @@ public class PictureInPicturePlugin extends Plugin
 					pipFrame.setVisible(true);
 					pipUp = true;
 
+
+
+
+
+
+/*
+
+
+					mouseManager.registerMouseListener(0, mouseListener);
+					mouseManager.registerMouseWheelListener(0, mouseWheelListener);
+
+					client.setStretchedEnabled(true);
+
+					client.setStretchedIntegerScaling(false);
+					client.setStretchedKeepAspectRatio(true);
+					client.setStretchedFast(true);
+					client.setScalingFactor(-20);
+
+					client.invalidateStretching(true);
+*/
+
+
+
+
+
+
+
+
+
+
 					log.debug("PIP initialized");
 				}
 			}
@@ -531,28 +599,49 @@ public class PictureInPicturePlugin extends Plugin
 
 	private void destroyPip()
 	{
+		SwingUtilities.invokeLater(new Runnable()
+								   {
+									   @Override
+									   public void run()
+									   {
 
-		// Destroy the PIP Frame
-		if (pipFrame != null)
-		{
-			pipFrame.setVisible(false);
-			pipFrame.dispose();
-			pipFrame = null;
-			pipUp = false;
-			log.debug("PIP destroyed");
-		}
 
-		// Clear out anything else that gets "stuck"
-		for (Frame frame : Frame.getFrames())
-		{
-			if (frame.getTitle() != null && frame.getTitle().equals("Picture in Picture"))
-			{
-				frame.setVisible(false);
-				frame.dispose();
-				frame = null;
-				log.debug("PIP cleanup");
-			}
-		}
+										   // Destroy the PIP Frame
+										   if (pipFrame != null)
+										   {
+
+											   pipFrame.remove(clientPanel);
+
+
+											   clientPanel = new ClientPanel(applet, clientDimension);
+
+
+											   runeLiteUiPanel.add(clientPanel, BorderLayout.CENTER);
+
+											   pipFrame.setVisible(false);
+											   pipFrame.dispose();
+
+											   pipFrame = null;
+											   pipUp = false;
+											   log.debug("PIP destroyed");
+
+
+										   }
+
+										   // Clear out anything else that gets "stuck"
+										   for (Frame frame : Frame.getFrames())
+										   {
+											   if (frame.getTitle() != null && frame.getTitle().equals("Picture in Picture"))
+											   {
+												   frame.setVisible(false);
+												   frame.dispose();
+												   frame = null;
+												   log.debug("PIP cleanup");
+											   }
+										   }
+									   }
+								   }
+		);
 	}
 
 	//runs first to initialize pip
